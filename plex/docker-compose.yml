@@ -1,20 +1,43 @@
 ---
-version: "2.1"
-volumes:
-  container_data: {}
+version: '3.9'
 services:
   plex:
-    image: lscr.io/linuxserver/plex:latest
+    image: linuxserver/plex:latest
     container_name: plex
-    network_mode: host
+    hostname: ums-plex
+    domainname: plex.molovestoshare.com
+    privileged: true
+    cap_add:
+      - DAC_READ_SEARCH
+      - SYS_ADMIN
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Chicago
       - VERSION=docker
-      - PLEX_CLAIM= #optional
+      - TZ="America/Chicago"
+      - runtime=nvidia
+      - DOCKER_MODS=ghcr.io/gilbn/theme.park:plex
+      - TP_DOMAIN=themepark.molovestoshare.com
+      - TP_THEME=overseerr
+      - PLEX_CLAIM= # Generate new claim codes here: https://www.plex.tv/claim/
+      - ADVERTISE_IP="http://192.168.10.52:32400/" # dont forget to add '/web' to the url
     volumes:
-      - container_data:/config
+      - /tmp:/transcodes
+      - /dev/dri:/dev/dri
+      - /data/compose/plex/config:/config
       - /home/monash/Backup_Disk/media/tv:/tv
       - /home/monash/Backup_Disk/media/movies:/movies
+    network_mode: host
+    ports:
+      - 32400:32400
+      - :1900/udp
+      - :3005
+      - :5353/udp
+      - :8324
+      - :32469
+      - :32410/udp
+      - :32412/udp
+      - :32413/udp
+      - :32414/udp
     restart: unless-stopped
+
