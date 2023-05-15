@@ -20,16 +20,14 @@ groups:
         summary: CPU alert for container node '{{ $labels.job }}'
 
     - alert: node_high_memory_usage_70
-      expr: 100 / sum(netdata_system_ram_MB_average) by (job)
-        * sum(netdata_system_ram_MB_average{dimension=~"free|cached"}) by (job) < 30
+      expr: 100 / sum(netdata_system_ram_MB_average) by (job) * sum(netdata_system_ram_MB_average{dimension=~"free|cached"}) by (job) < 30
       for: 1m
       annotations:
         description: '{{ $labels.job }} memory usage is {{ humanize $value}}%.'
         summary: Memory alert for container node '{{ $labels.job }}'
 
     - alert: node_low_root_filesystem_space_20
-      expr: 100 / sum(netdata_disk_space_GB_average{family="/"}) by (job)
-        * sum(netdata_disk_space_GB_average{family="/",dimension=~"avail|cached"}) by (job) < 20
+      expr: 100 / sum(netdata_disk_space_GB_average{family="/"}) by (job) * sum(netdata_disk_space_GB_average{family="/",dimension=~"avail|cached"}) by (job) < 20
       for: 1m
       annotations:
         description: '{{ $labels.job }} root filesystem space is {{ humanize $value}}%.'
@@ -85,7 +83,7 @@ groups:
       description: "Plex Media Server is down for more than 30 seconds."
 
   - alert: plex_high_cpu
-    expr: sum(rate(container_cpu_usage_seconds_total{name="plex"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
+    expr: sum(rate(container_cpu_usage_seconds_total{name="plex"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 4
     for: 30s
     labels:
       severity: warning
@@ -94,7 +92,7 @@ groups:
       description: "Portainer CPU usage is {{ humanize $value}}%."
 
   - alert: plex_high_memory
-    expr: sum(container_memory_usage_bytes{name="plex"}) > 8589934592
+    expr: sum(container_memory_usage_bytes{name="plex"}) > 21474836479
     for: 30s
     labels:
       severity: warning

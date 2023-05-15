@@ -7,11 +7,55 @@ networks:
 volumes:
     prometheus_data: {}
     grafana_data: {}
+    influxdb_data: {}
     netdata_config: {}
     netdata_lib: {}
     netdata_cache: {}
 
 services:
+  influxdb:
+    image: influxdb:1.8-alpine
+    container_name: influxdb
+    restart: always
+    environment:
+      - INFLUXDB_DB=telegraf
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  telegraf:
+    image: telegraf
+    container_name: telegraf
+    extra_hosts:
+      - "influxdb:192.168.10.52"
+    restart: always
+    environment:
+      - HOST_PROC:/rootfs/proc
+      - HOST_SYS:/rootfs/sys
+      - HOST_ETC:/rootfs/etc
+    volumes:
+    - /sys:/rootfs/sys:ro
+    - /proc:/rootfs/proc:ro
+    - /etc:/rootfs/etc:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - ./influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+      - "8125:8125"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
   loki:
     image: grafana/loki
     container_name: loki
