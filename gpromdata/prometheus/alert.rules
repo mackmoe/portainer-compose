@@ -184,16 +184,16 @@ groups:
       description: "Deluge memory consumption is at {{ humanize $value}}."
     
   - alert: portainer_down
-    expr: absent(container_memory_usage_bytes{name="mgmt-stack-portainer"})
+    expr: absent(container_memory_usage_bytes{name="portainer"})
     for: 30s
     labels:
       severity: critical
     annotations:
-      summary: "mgmt-stack-portainer docker controller down"
+      summary: "Portainer docker controller down"
       description: "Portainer container is down for more than 30 seconds."
 
   - alert: portainer_high_cpu
-    expr: sum(rate(container_cpu_usage_seconds_total{name="mgmt-stack-portainer"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
+    expr: sum(rate(container_cpu_usage_seconds_total{name="portainer"}[1m])) / count(node_cpu_seconds_total{mode="system"}) * 100 > 10
     for: 30s
     labels:
       severity: warning
@@ -202,7 +202,7 @@ groups:
       description: "Portainer CPU usage is {{ humanize $value}}%."
 
   - alert: portainer_high_memory
-    expr: sum(container_memory_usage_bytes{name="mgmt-stack-portainer"}) > 1200000000
+    expr: sum(container_memory_usage_bytes{name="portainer"}) > 1200000000
     for: 30s
     labels:
       severity: warning
