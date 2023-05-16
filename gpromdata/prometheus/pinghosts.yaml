@@ -1,4 +1,5 @@
 - targets:  # url;humanname;routing;switch
+    - https://homebridge.molovestoshare.com;homebridge;external;internetbox
     - https://plex.molovestoshare.com;plex;external;internetbox
     - https://netdata.molovestoshare.com;netdata;external;internetbox
     - https://dbotz.molovestoshare.com;DlooGE;external;internetbox
