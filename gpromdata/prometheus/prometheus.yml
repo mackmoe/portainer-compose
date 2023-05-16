@@ -11,13 +11,6 @@ global:
 rule_files:
   - "alert.rules"
 
-# Load and evaluate rules over on https://prometheus-us-central1.grafana.net/api/prom.
-# remote_write:
-# - url: https://prometheus-us-central1.grafana.net/api/prom/push
-  # basic_auth:
-    # username: "979191"
-    # password: eyJrIjoiNzc5YjE1ZDg2YTZhNmM3NGNjNmMyY2FiZDk5MWQ3YTI5YmJlNWU2YyIsIm4iOiJtb21vdGhlaG9ibzIxMCIsImlkIjo4NTIxOTB9
-
 # A scrape configuration containing exactly one endpoint to scrape.
 scrape_configs:
   - job_name: 'nodeexporter'
@@ -31,7 +24,7 @@ scrape_configs:
       - targets: ['cadvisor:8080']
 
   - job_name: 'prometheus'
-    scrape_interval: 10s
+    scrape_interval: 5s
     static_configs:
       - targets: ['localhost:9090']
 
@@ -54,6 +47,44 @@ scrape_configs:
     metrics_path: /projects/8eeea913-83fc-4b52-99f9-55e1a3b9d33d/metrics/ZjXGELuU8zHCwfIzVUfmXL9CP4LF3qNf
     static_configs:
     - targets: ['healthchecks.io']
+
+  - job_name: 'speedtest'
+    metrics_path: /metrics
+    scrape_interval: 5m
+    scrape_timeout: 60s # running speedtest needs time to complete
+    honor_labels: true
+    static_configs:
+      - targets: ['speedtest:9798']
+
+  - job_name: 'ping'
+    metrics_path: /probe
+    scrape_interval: 15s
+    params:
+      module: [http_2xx]  # Look for a HTTP 200 response.
+    file_sd_configs:
+      - files:
+        - pinghosts.yaml
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '(.*);(.*);(.*);(.*)'  #first is the url, thus unique for instance
+        target_label: instance
+        replacement: $1
+      - source_labels: [__address__]
+        regex: '(.*);(.*);(.*);(.*)'  #second is humanname to use in charts
+        target_label: humanname
+        replacement: $2
+      - source_labels: [__address__]
+        regex: '(.*);(.*);(.*);(.*)'  #third state whether this is testing external or internal network
+        target_label: routing
+        replacement: $3
+      - source_labels: [__address__]
+        regex: '(.*);(.*);(.*);(.*)'  #fourth is which switch/router the device is connected to.
+        target_label: switching
+        replacement: $4
+      - source_labels: [instance]
+        target_label: __param_target
+      - target_label: __address__
+        replacement: ping:9115  # The blackbox exporter's real hostname:port.
 
   # - job_name: watchtower
   #   scrape_interval: 5s

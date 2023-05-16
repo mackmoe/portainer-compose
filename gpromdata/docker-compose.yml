@@ -7,51 +7,32 @@ networks:
 volumes:
     prometheus_data: {}
     grafana_data: {}
-    influxdb_data: {}
+    influxdbv2: {}
     netdata_config: {}
     netdata_lib: {}
     netdata_cache: {}
 
 services:
   influxdb:
-    image: influxdb:1.8-alpine
-    container_name: influxdb
-    restart: always
-    environment:
-      - INFLUXDB_DB=telegraf
-      - INFLUXDB_ADMIN_ENABLED=true
-      - INFLUXDB_ADMIN_USER=admin
-      - INFLUXDB_ADMIN_PASSWORD=admin
+    image: influxdb:2.6-alpine
+    env_file:
+      - configuration.env
+    volumes:
+      - influxdbv2:/var/lib/influxdb2:rw
     ports:
       - "8086:8086"
-    volumes:
-      - influxdb_data:/var/lib/influxdb
     networks:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
   telegraf:
-    image: telegraf
-    container_name: telegraf
-    extra_hosts:
-      - "influxdb:192.168.10.52"
-    restart: always
-    environment:
-      - HOST_PROC:/rootfs/proc
-      - HOST_SYS:/rootfs/sys
-      - HOST_ETC:/rootfs/etc
-    volumes:
-    - /sys:/rootfs/sys:ro
-    - /proc:/rootfs/proc:ro
-    - /etc:/rootfs/etc:ro
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    - ./influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    image: telegraf:1.25-alpine
     depends_on:
       - influxdb
-    links:
-      - influxdb
-    ports:
-      - "8125:8125"
+    volumes:
+      - ./influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    env_file:
+      - configuration.env
     networks:
       - monitor-net
     labels:
@@ -61,6 +42,8 @@ services:
     container_name: loki
     expose:
       - 3100
+    ports:
+      - "3100:3100"
     command: -config.file=/etc/loki/config.yml
     volumes:
       - ./loki/loki-config.yml:/etc/loki/config.yml
@@ -81,6 +64,36 @@ services:
       - ./promtail/promtail-config.yml:/etc/promtail/config.yml
     expose:
       - 9080
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  ping:
+    tty: true
+    stdin_open: true
+    expose:
+      - 9115
+    ports:
+      - 9115:9115
+    image: prom/blackbox-exporter
+    restart: always
+    volumes:
+      - ./blackbox/blackbox.yml:/config/blackbox.yml
+    command:
+      - '--config.file=/config/blackbox.yml'
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+  speedtest:
+    tty: true
+    stdin_open: true
+    expose:
+      - 9798
+    ports:
+      - 9798:9798
+    image: miguelndecarvalho/speedtest-exporter
+    restart: always
     networks:
       - monitor-net
     labels:
@@ -117,7 +130,6 @@ services:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -130,17 +142,20 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
+      - '--web.enable-lifecycle' # To enable the Prometheus /-/reload HTTP endpoint - automatically reload your Prometheus config when it changes
     restart: unless-stopped
+    links:
+      - ping:ping
+      - speedtest:speedtest
     expose:
       - 9090
     networks:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   grafana:
     image: grafana/grafana:latest
+    env_file: configuration.env
     container_name: grafana
     volumes:
       - grafana_data:/var/lib/grafana
@@ -151,13 +166,14 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     restart: unless-stopped
+    links:
+      - influxdb
     expose:
       - 3000
     networks:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.1
     container_name: cadvisor
@@ -177,7 +193,6 @@ services:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   nodeexporter:
     image: prom/node-exporter
     container_name: nodeexporter
@@ -189,7 +204,9 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+      # - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
     expose:
       - 9100
@@ -197,7 +214,6 @@ services:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   pushgateway:
     image: prom/pushgateway:latest
     container_name: pushgateway
@@ -208,7 +224,6 @@ services:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   alertmanager:
     image: prom/alertmanager
     container_name: alertmanager
@@ -224,7 +239,6 @@ services:
       - monitor-net
     labels:
       org.label-schema.group: "monitoring"
-
   caddy:
     image: caddy:2.6.4
     container_name: caddy
@@ -235,7 +249,6 @@ services:
       - "9080:9080"
       - "9091:9091"
       - "9100:9100"
-      - "3100:3100"
     volumes:
       - ./caddy:/etc/caddy
     environment:
