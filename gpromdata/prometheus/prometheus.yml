@@ -55,6 +55,11 @@ scrape_configs:
     honor_labels: true
     static_configs:
       - targets: ['speedtest:9798']
+  
+  - job_name: 'influxdb'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['influxdb:8086']
 
   - job_name: 'ping'
     metrics_path: /probe

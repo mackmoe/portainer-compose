@@ -14,7 +14,7 @@ volumes:
 
 services:
   influxdb:
-    image: influxdb:2.6-alpine
+    image: influxdb  #:2.6-alpine
     env_file:
       - configuration.env
     volumes:
@@ -26,7 +26,7 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   telegraf:
-    image: telegraf:1.25-alpine
+    image: telegraf  #:1.25-alpine
     depends_on:
       - influxdb
     volumes:
@@ -142,6 +142,8 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-remote-write-receiver'
+      - '--web.enable-admin-api'
       - '--web.enable-lifecycle' # To enable the Prometheus /-/reload HTTP endpoint - automatically reload your Prometheus config when it changes
     restart: unless-stopped
     links:

@@ -92,7 +92,7 @@ groups:
       description: "Portainer CPU usage is {{ humanize $value}}%."
 
   - alert: plex_high_memory
-    expr: sum(container_memory_usage_bytes{name="plex"}) > 21474836479
+    expr: sum(container_memory_usage_bytes{name="plex"}) > 16106127360
     for: 30s
     labels:
       severity: warning
@@ -146,7 +146,7 @@ groups:
       description: "Nextcloud CPU usage is {{ humanize $value}}%."
 
   - alert: nextcloud_high_memory
-    expr: sum(container_memory_usage_bytes{name="nextcloud"}) > 1200000000
+    expr: sum(container_memory_usage_bytes{name="nextcloud"}) > 21474836479
     for: 30s
     labels:
       severity: warning
@@ -173,7 +173,7 @@ groups:
       description: "Deluge CPU usage is {{ humanize $value}}%."
 
   - alert: deluge_high_memory
-    expr: sum(container_memory_usage_bytes{name="deluge"}) > 1200000000
+    expr: sum(container_memory_usage_bytes{name="deluge"}) > 5368709120
     for: 30s
     labels:
       severity: warning
