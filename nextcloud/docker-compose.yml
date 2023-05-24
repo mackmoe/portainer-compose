@@ -23,17 +23,13 @@ volumes:
   nc-mariadb: {}
 
 services:
-  webcron:
-    image: scheduler:latest
-    container_name: nc-webcron
-    depends_on:
-      - app
-    restart: unless-stopped
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
   app:
-    image: nextcloud:latest
     container_name: nextcloud
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM nextcloud:latest
+        RUN apt update -yq && apt install -yq libfilesys-smbclient-perl libsmbclient libsmbclient-dev smbclient && apt upgrade -yq
     domainname: nextcloud.molovestoshare.com
     depends_on:
       - db
@@ -88,3 +84,12 @@ services:
     command: redis-server --requirepass ebfhkifzte
     volumes:
       - nc-redis:/data
+  webcron:
+    image: scheduler:latest
+    container_name: nc-webcron
+    depends_on:
+      - app
+    restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+  
