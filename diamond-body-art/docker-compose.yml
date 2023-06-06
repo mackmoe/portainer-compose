@@ -1,0 +1,32 @@
+services:
+  ghostblog:
+    image: ghost:latest
+    container_name: diamond-body-art-website
+    hostname: ghostblog
+    restart: always
+    ports:
+      - 23686:2368
+    depends_on:
+      - ghostdb
+    environment:
+      url: https://diamondbodyart.molovestoshare.com/
+      database__client: mysql
+      database__connection__host: ghostdb
+      database__connection__user: ghost
+      database__connection__password: ghostdbpass
+      database__connection__database: ghostdb
+    volumes:
+      - /data/compose/dbaghost/content:/var/lib/ghost/content
+
+  ghostdb:
+    image: mariadb:latest
+    container_name: diamond-body-art-database
+    hostname: ghostdb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_mysql_root_password
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: ghostdbpass
+      MYSQL_DATABASE: ghostdb
+    volumes:
+      - /data/compose/dbaghost/mysql:/var/lib/mysql
