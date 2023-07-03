@@ -1,7 +1,19 @@
 services:
+  proxy:
+    image: nginx:latest
+    container_name: mologhost-proxy
+    ports:
+      - ":80"
+      - ":443"
+    links:
+      - ghost
+    volumes:
+      - $PWD/nginx/ghost.molovestoshare.com.crt:/etc/ssl/certs/ghost.molovestoshare.com.crt:z
+      - $PWD/nginx/ghost.molovestoshare.com.key:/etc/ssl/private/ghost.molovestoshare.com.pem:z
+      - $PWD/nginx/ghost.conf:/etc/nginx/sites-enabled/ghost.conf:z
   ghost:
     image: ghost:latest
-    container_name: molo-ghost-blog
+    container_name: mologhost-blog
     hostname: ghost
     restart: always
     ports:
@@ -15,12 +27,12 @@ services:
       database__connection__user: ghost
       database__connection__password: ghostdbpass
       database__connection__database: ghostdb
+      comments: false
     volumes:
       - /data/compose/ghost/content:/var/lib/ghost/content
-
   gdb:
     image: mariadb:latest
-    container_name: molo-ghost-deebee
+    container_name: mologhost-deebee
     hostname: gdb
     restart: always
     environment:
@@ -28,5 +40,7 @@ services:
       MYSQL_USER: ghost
       MYSQL_PASSWORD: ghostdbpass
       MYSQL_DATABASE: ghostdb
+    expose:
+      - "3306"
     volumes:
-      - /data/compose/ghost/mysql:/var/lib/mysql
+      - /data/compose/ghost/mariadb:/var/lib/mysql
