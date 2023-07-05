@@ -25,8 +25,8 @@ services:
       - /tmp:/transcodes
       - /dev/dri:/dev/dri
       - /data/compose/plex/config:/config
-      - /home/monash/Backup_Disk/media/tv:/tv
-      - /home/monash/Backup_Disk/media/movies:/movies
+      - /home/monash/Backup_Disk/Media/TV Shows:/TV Shows
+      - /home/monash/Backup_Disk/media/Movies:/Movies
     network_mode: host
     ports:
       - 32400:32400
