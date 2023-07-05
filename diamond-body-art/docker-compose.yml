@@ -1,8 +1,20 @@
 services:
+  proxy:
+    image: nginx:latest
+    container_name: 	diamond-body-art-proxy
+    ports:
+      - ":80"
+      - ":443"
+    links:
+      - ghostblog
+    volumes:
+      - $PWD/nginx/diamondbodyart.molovestoshare.com.crt:/etc/ssl/certs/diamondbodyart.molovestoshare.com.crt:z
+      - $PWD/nginx/diamondbodyart.molovestoshare.com.key:/etc/ssl/private/diamondbodyart.molovestoshare.com.pem:z
+      - $PWD/nginx/ghost.conf:/etc/nginx/sites-enabled/ghost.conf:z
   ghostblog:
     image: ghost:latest
     container_name: diamond-body-art-website
-    hostname: ghostblog
+    hostname: dba-ghostblog
     restart: always
     ports:
       - 23686:2368
@@ -11,7 +23,7 @@ services:
     environment:
       url: https://diamondbodyart.molovestoshare.com/
       database__client: mysql
-      database__connection__host: ghostdb
+      database__connection__host: dba-ghostdb # ghostdb
       database__connection__user: ghost
       database__connection__password: ghostdbpass
       database__connection__database: ghostdb
@@ -21,7 +33,7 @@ services:
   ghostdb:
     image: mariadb:latest
     container_name: diamond-body-art-database
-    hostname: ghostdb
+    hostname: dba-ghostdb
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root_mysql_root_password
